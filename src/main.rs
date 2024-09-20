@@ -179,8 +179,8 @@ fn map_key_to_user_value(key: &str, user: &quaver::User) -> String {
 
 /// Returns the value of the specified environment variable, and if the value resolves to a file path, the file is read and the content is returned instead
 /// 
+/// - NOTE: If the value is a file path, the file contents will have leading and trailing whitespace removed automatically
 /// - NOTE: Returns an error if the environment variable is not found or if the file cannot be read
-// TODO: Check for permission errors when working with env var files
 fn get_env_var_file(key: &str) -> Result<Option<String>> {
     match env::var(key) {
         Ok(mut v) => {
@@ -190,16 +190,13 @@ fn get_env_var_file(key: &str) -> Result<Option<String>> {
             // Try to convert the value to a file path
             let path = Path::new(&v);
 
-            trace!("Is file ({}), Exists ({})", path.is_file(), path.exists());
-
             // The value is a file path, read the file and return its content
-            if path.exists() && path.is_file() {
-                trace!("Using discord key from file ({path:?}): {:?}", std::fs::read_to_string(path)?);
-                Ok(Some(std::fs::read_to_string(path)?))
+            // NOTE: This inherently returns an error if we can't confirm if the file exists or not
+            if path.try_exists()? && path.is_file() {
+                Ok(Some(std::fs::read_to_string(path)?.trim().to_owned()))
             }
             // The value is not a file path, so return it as is
             else {
-                trace!("Using discord key directly: {v}");
                 Ok(Some(v))
             }
         },
