@@ -179,13 +179,13 @@ fn map_key_to_user_value(key: &str, user: &quaver::User) -> String {
 
 /// Returns the value of the specified environment variable, and if the value resolves to a file path, the file is read and the content is returned instead
 /// 
-/// - NOTE: If the value is a file path, the file contents will have leading and trailing whitespace removed automatically
+/// - NOTE: The value will have all leading and trailing whitespace removed, and if the value points to a file, the file contents will also have leading and trailing whitespace removed
 /// - NOTE: Returns an error if the environment variable is not found or if the file cannot be read
 fn get_env_var_file(key: &str) -> Result<Option<String>> {
     match env::var(key) {
         Ok(mut v) => {
             // Remove any trailing whitespace
-            v = v.trim_end_matches(' ').to_string();
+            v = v.trim().to_string();
 
             // Try to convert the value to a file path
             let path = Path::new(&v);
@@ -212,7 +212,7 @@ fn get_env_var(key: &str) -> Option<String> {
     match env::var(key) {
         Ok(v) => {
             // Remove any trailing whitespace
-            Some(v.trim_end_matches(' ').to_string())
+            Some(v.trim().to_string())
         },
         Err(e) => None
     }
