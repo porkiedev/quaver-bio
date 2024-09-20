@@ -65,16 +65,7 @@ async fn main() -> Result<()> {
         .with(loki_layer)
         .with(standard_layer)
         .init();
-
-    info!("Using log level {}", *LOG_LEVEL);
-
-    tracing::warn!("ae warn");
-    info!("ae info");
-    debug!("ae debug");
-    trace!("ae trace");
-
-    return Ok(());
-
+    
     // Get the application config
     let config = Config::new(&CONFIG_PATH).unwrap();
     // Create a discord API handle
