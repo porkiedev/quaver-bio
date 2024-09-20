@@ -33,7 +33,7 @@ lazy_static! {
         .expect("Invalid log level specified. Valid options are TRACE, DEBUG, INFO, WARN, and ERROR")
     };
     /// The endpoint for the Loki log server
-    static ref LOKI_URL: Option<String> = get_env_var_file("QB_LOKI_URL").unwrap();
+    static ref LOKI_URL: Option<String> = get_env_var("QB_LOKI_URL");
     /// The user's Discord token. This can be provided directly or via a file path (useful for docker secret support, amongst other things)
     static ref DISCORD_TOKEN: String = get_env_var_file("QB_DISCORD_TOKEN").unwrap().expect("The QB_DISCORD_TOKEN environment variable was not set");
 }
@@ -180,6 +180,7 @@ fn map_key_to_user_value(key: &str, user: &quaver::User) -> String {
 /// Returns the value of the specified environment variable, and if the value resolves to a file path, the file is read and the content is returned instead
 /// 
 /// - NOTE: Returns an error if the environment variable is not found or if the file cannot be read
+// TODO: Check for permission errors when working with env var files
 fn get_env_var_file(key: &str) -> Result<Option<String>> {
     match env::var(key) {
         Ok(mut v) => {
@@ -189,12 +190,16 @@ fn get_env_var_file(key: &str) -> Result<Option<String>> {
             // Try to convert the value to a file path
             let path = Path::new(&v);
 
+            trace!("Is file ({}), Exists ({})", path.is_file(), path.exists());
+
             // The value is a file path, read the file and return its content
             if path.exists() && path.is_file() {
+                trace!("Using discord key from file ({path:?}): {:?}", std::fs::read_to_string(path)?);
                 Ok(Some(std::fs::read_to_string(path)?))
             }
             // The value is not a file path, so return it as is
             else {
+                trace!("Using discord key directly: {v}");
                 Ok(Some(v))
             }
         },
